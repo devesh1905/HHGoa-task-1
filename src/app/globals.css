@@ -1,0 +1,253 @@
+:root {
+  --bg-green: #0F4C35;
+  --bg-green-dark: #093323;
+  --accent-pink: #FF1D8E;
+  --accent-pink-hover: #e0127a;
+  --accent-yellow: #F5C518;
+  --card-cream: #FBF3E3;
+  --text-dark: #0F4C35;
+  --text-muted: #53635B;
+  --text-light: #FBF3E3;
+
+  /* Easing curves from skills-main */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  min-height: 100vh;
+  background-color: var(--bg-green);
+  color: var(--text-light);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Utility Classes */
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Eyebrow / Kicker */
+.kicker-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-pink);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kicker-label.yellow {
+  color: var(--accent-yellow);
+}
+
+/* Noise/grain overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Gold Frame treatment class */
+.gold-frame-accent {
+  border: 4px solid var(--accent-yellow) !important;
+}
+
+/* Stitched / Dashed border motif helper class */
+.stitched-border-pink {
+  border: 2px dashed var(--accent-pink) !important;
+}
+
+.stitched-border-yellow {
+  border: 2px dashed var(--accent-yellow) !important;
+}
+
+/* Cream Content Card */
+.cream-card {
+  background-color: var(--card-cream);
+  color: var(--text-dark);
+  border-radius: 28px;
+  padding: 2.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Primary Pink Pill Button */
+.btn-pink {
+  background-color: var(--accent-pink);
+  color: var(--card-cream);
+  border-radius: 9999px;
+  padding: 0.85rem 2rem;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  box-shadow: 0 4px 14px rgba(255, 29, 142, 0.35);
+}
+
+.btn-pink:hover {
+  background-color: var(--accent-pink-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 29, 142, 0.45);
+}
+
+.btn-pink:active {
+  transform: scale(0.97);
+}
+
+.btn-pink:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Secondary Outlined Button */
+.btn-outline {
+  background-color: transparent;
+  color: var(--accent-pink);
+  border: 2px solid var(--accent-pink);
+  border-radius: 9999px;
+  padding: 0.8rem 1.75rem;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+
+.btn-outline:hover {
+  background-color: rgba(255, 29, 142, 0.08);
+}
+
+.btn-outline:active {
+  transform: scale(0.97);
+}
+
+/* Form Input Styling - Soft rounded aesthetic matching card corners (~20px) */
+.form-input {
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  border-radius: 20px;
+  border: 2px solid rgba(15, 76, 53, 0.18);
+  background-color: #ffffff;
+  color: var(--text-dark);
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+
+.form-input:focus {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 4px rgba(255, 29, 142, 0.15);
+}
+
+/* Avatar Upload Area with Dashed Pink Border */
+.avatar-upload-box {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px dashed var(--accent-pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out);
+  background: rgba(255, 29, 142, 0.04);
+}
+
+.avatar-upload-box:hover {
+  transform: scale(1.03);
+  border-color: var(--accent-yellow);
+}
+
+.avatar-upload-box:active {
+  transform: scale(0.97);
+}
+
+/* Animations from skills-main */
+.animate-enter {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: scaleIn 300ms var(--ease-out) forwards;
+}
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Subtle sway animation for goa_hindi graphic */
+.animate-sway {
+  animation: goaSway 3.5s ease-in-out infinite alternate;
+  transform-origin: center center;
+}
+
+@keyframes goaSway {
+  0% {
+    transform: rotate(-3deg) translateY(0px);
+  }
+  100% {
+    transform: rotate(3deg) translateY(-2px);
+  }
+}
