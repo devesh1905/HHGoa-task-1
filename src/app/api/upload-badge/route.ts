@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 
+const memoryStore = (globalThis as unknown as { _badgeStore?: Map<string, { buffer: Buffer; mime: string }> })._badgeStore || 
+  ((globalThis as unknown as { _badgeStore: Map<string, { buffer: Buffer; mime: string }> })._badgeStore = new Map());
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -23,9 +26,14 @@ export async function POST(request: Request) {
       });
       imageUrl = blob.url;
     } else {
-      // In-memory / dataUrl fallback response if token is not yet configured locally
-      const buffer = Buffer.from(await file.arrayBuffer());
-      imageUrl = `data:image/png;base64,${buffer.toString('base64')}`;
+      // Save to shared memory store for local development/deployment before token setup
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      memoryStore.set(badgeId, { buffer, mime: 'image/png' });
+      
+      const host = request.headers.get('host') || 'hhgoa-id-generator.vercel.app';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      imageUrl = `${protocol}://${host}/api/badge-image/${badgeId}`;
     }
 
     return NextResponse.json({ id: badgeId, url: imageUrl, name });

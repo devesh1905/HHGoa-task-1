@@ -59,7 +59,7 @@ export default async function BadgePage({ params, searchParams }: Props) {
   const sParams = await searchParams;
   const nameParam = (sParams.name as string) || 'Builder';
 
-  let imageUrl = '';
+  let imageUrl = `/api/badge-image/${id}`;
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
