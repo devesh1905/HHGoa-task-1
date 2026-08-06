@@ -12,7 +12,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const sParams = await searchParams;
   const nameParam = (sParams.name as string) || 'Builder';
 
-  let imageUrl = `https://hhgoa-id-generator.vercel.app/api/badge-image/${id}`;
+  let imageUrl = '';
 
   // If Vercel Blob token is available, resolve public blob URL
   if (process.env.BLOB_READ_WRITE_TOKEN) {
@@ -24,6 +24,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     } catch (e) {
       console.error('Error fetching blob metadata:', e);
     }
+  }
+
+  if (!imageUrl) {
+    imageUrl = `https://hh-goa-task-1-green.vercel.app/api/badge-image/${id}`;
   }
 
   const title = `${nameParam}'s Official HH Goa 2026 Builder Badge`;
