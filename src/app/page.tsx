@@ -93,6 +93,42 @@ export default function Home() {
   };
 
   const [isSharing, setIsSharing] = useState(false);
+  const [isGeneralSharing, setIsGeneralSharing] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState<{ title: string; text: string; url: string }>({ title: '', text: '', url: '' });
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Helper to render badge canvas and upload to Vercel Blob API
+  const getBadgeShareUrl = async (): Promise<string> => {
+    if (!cardRef.current) return window.location.origin;
+
+    const canvas = await htmlToImage.toCanvas(cardRef.current, {
+      quality: 1.0,
+      pixelRatio: 2,
+      cacheBust: true,
+    });
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), 'image/png')
+    );
+
+    if (!blob) throw new Error('Failed to generate image blob');
+
+    const formData = new FormData();
+    formData.append('file', blob, 'badge.png');
+    formData.append('name', name || 'Builder');
+
+    const res = await fetch('/api/upload-badge', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.id) {
+      return `${window.location.origin}/badge/${data.id}?name=${encodeURIComponent(name || 'Builder')}`;
+    }
+    return window.location.origin;
+  };
 
   const handleShare = async () => {
     if (!cardRef.current) return;
@@ -102,35 +138,7 @@ export default function Home() {
 
     try {
       setIsSharing(true);
-      const canvas = await htmlToImage.toCanvas(cardRef.current, {
-        quality: 1.0,
-        pixelRatio: 2,
-        cacheBust: true,
-      });
-
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob((b) => resolve(b), 'image/png')
-      );
-
-      if (!blob) throw new Error('Failed to generate image blob');
-
-      // Upload rendered badge image to Vercel Blob API
-      const formData = new FormData();
-      formData.append('file', blob, 'badge.png');
-      formData.append('name', name || 'Builder');
-
-      const res = await fetch('/api/upload-badge', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      
-      let shareUrl = window.location.origin;
-      if (data.id) {
-        shareUrl = `${window.location.origin}/badge/${data.id}?name=${encodeURIComponent(name || 'Builder')}`;
-      }
-
+      const shareUrl = await getBadgeShareUrl();
       const caption = `Building at HH Goa 2026! Here is my official Builder Badge 🚀`;
       const tweetIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}&url=${encodeURIComponent(shareUrl)}&hashtags=FrameInGoa`;
       
@@ -142,7 +150,6 @@ export default function Home() {
     } catch (err) {
       console.error('Link-based share failed, utilizing fallback clipboard/download:', err);
       
-      // Fallback: Copy to clipboard & download image if network upload fails
       try {
         const canvas = await htmlToImage.toCanvas(cardRef.current, { quality: 1.0, pixelRatio: 2 });
         canvas.toBlob(async (blob) => {
@@ -169,6 +176,46 @@ export default function Home() {
       }
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleGeneralShare = async () => {
+    if (!cardRef.current) return;
+    try {
+      setIsGeneralSharing(true);
+      const shareUrl = await getBadgeShareUrl();
+      const titleText = `${name || 'Builder'}'s HH Goa 2026 Builder Badge`;
+      const caption = `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`;
+
+      // Web Share API support check (Mobile browsers & desktop browsers supporting native sheet)
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: titleText,
+          text: caption,
+          url: shareUrl,
+        });
+      } else {
+        // Fallback for unsupported browsers (Custom Modal)
+        setShareData({
+          title: titleText,
+          text: caption,
+          url: shareUrl,
+        });
+        setShowShareModal(true);
+      }
+    } catch (err) {
+      // AbortError occurs when user cancels native share sheet, ignore silently
+      if ((err as Error).name !== 'AbortError') {
+        console.error('General share failed:', err);
+        setShareData({
+          title: `${name || 'Builder'}'s HH Goa 2026 Builder Badge`,
+          text: `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`,
+          url: window.location.origin,
+        });
+        setShowShareModal(true);
+      }
+    } finally {
+      setIsGeneralSharing(false);
     }
   };
 
@@ -323,11 +370,21 @@ export default function Home() {
                 <button 
                   className="btn-outline" 
                   onClick={handleShare}
-                  disabled={!photo || !name || isSharing}
+                  disabled={!photo || !name || isSharing || isGeneralSharing}
                   style={{ width: '100%', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
                 >
                   {isSharing ? <Loader2 size={16} className="spin" /> : <Share2 size={16} />} 
                   {isSharing ? 'GENERATING SHARE LINK...' : 'SHARE ON X (#FRAMEINGOA) ↗'}
+                </button>
+
+                <button 
+                  className="btn-secondary-share" 
+                  onClick={handleGeneralShare}
+                  disabled={!photo || !name || isSharing || isGeneralSharing}
+                  style={{ width: '100%', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  {isGeneralSharing ? <Loader2 size={16} className="spin" /> : <ExternalLink size={16} />} 
+                  {isGeneralSharing ? 'PREPARING LINK...' : 'SHARE ELSEWHERE ↗'}
                 </button>
               </div>
 
@@ -538,6 +595,100 @@ export default function Home() {
         />
         <span>HH GOA 2026 BY DEVESH</span>
       </footer>
+
+      {/* --- SHARE FALLBACK MODAL FOR UNSUPPORTED BROWSERS --- */}
+      {showShareModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(9, 51, 35, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1.5rem'
+        }}>
+          <div className="cream-card gold-frame-accent animate-enter" style={{
+            maxWidth: '420px',
+            width: '100%',
+            padding: '1.75rem',
+            position: 'relative'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div className="kicker-label" style={{ margin: 0 }}>
+                <span>✦</span> SHARE BADGE
+              </div>
+              <button 
+                onClick={() => setShowShareModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-dark)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="font-display" style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>
+              CHOOSE A PLATFORM
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {/* WhatsApp */}
+              <a 
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareData.text} ${shareData.url}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-modal-item"
+              >
+                <span>💬 WhatsApp</span>
+                <span>↗</span>
+              </a>
+
+              {/* LinkedIn */}
+              <a 
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareData.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-modal-item"
+              >
+                <span>💼 LinkedIn</span>
+                <span>↗</span>
+              </a>
+
+              {/* Telegram */}
+              <a 
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent(shareData.text)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-modal-item"
+              >
+                <span>✈️ Telegram</span>
+                <span>↗</span>
+              </a>
+
+              {/* Copy Link */}
+              <button 
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareData.url);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  } catch (e) {
+                    console.error('Failed to copy link:', e);
+                  }
+                }}
+                className="share-modal-item"
+                style={{ width: '100%', cursor: 'pointer' }}
+              >
+                <span>🔗 {copiedLink ? 'LINK COPIED TO CLIPBOARD!' : 'COPY DIRECT BADGE LINK'}</span>
+                <span>{copiedLink ? '✓' : '📋'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

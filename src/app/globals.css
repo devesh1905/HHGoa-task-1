@@ -165,7 +165,68 @@ body::before {
   transform: scale(0.97);
 }
 
-/* Form Input Styling - Soft rounded aesthetic matching card corners (~20px) */
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary General Share Button */
+.btn-secondary-share {
+  background-color: transparent;
+  color: var(--text-dark);
+  border: 2px solid rgba(15, 76, 53, 0.25);
+  border-radius: 9999px;
+  padding: 0.8rem 1.75rem;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.btn-secondary-share:hover {
+  background-color: rgba(15, 76, 53, 0.06);
+  border-color: var(--bg-green);
+}
+
+.btn-secondary-share:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary-share:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Modal share items */
+.share-modal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background-color: rgba(15, 76, 53, 0.04);
+  border: 1px solid rgba(15, 76, 53, 0.12);
+  border-radius: 16px;
+  color: var(--text-dark);
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.share-modal-item:hover {
+  background-color: rgba(15, 76, 53, 0.1);
+  border-color: var(--bg-green);
+}
 .form-input {
   width: 100%;
   padding: 0.9rem 1.25rem;
