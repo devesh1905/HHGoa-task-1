@@ -92,9 +92,41 @@ export default function Home() {
     }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    if (cardRef.current) {
+      try {
+        const canvas = await htmlToImage.toCanvas(cardRef.current, {
+          quality: 1.0,
+          pixelRatio: 2,
+          cacheBust: true,
+        });
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          try {
+            // Attempt to copy image directly to clipboard for instant Ctrl+V into X/Twitter
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+          } catch (clipErr) {
+            console.warn('Clipboard write failed, downloading image as fallback:', clipErr);
+            // Fallback download if browser blocks direct clipboard writing
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `HH_Goa_2026_Badge.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }, 'image/png');
+      } catch (err) {
+        console.error('Error generating badge for share:', err);
+      }
+    }
+
     const tweetText = encodeURIComponent(
-      `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`
+      `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa (Paste image with Ctrl+V)`
     );
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
   };
