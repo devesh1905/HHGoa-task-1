@@ -96,6 +96,10 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!cardRef.current) return;
+    
+    // Open tab synchronously on user click to prevent browser popup blocker
+    const popup = window.open('about:blank', '_blank');
+
     try {
       setIsSharing(true);
       const canvas = await htmlToImage.toCanvas(cardRef.current, {
@@ -130,7 +134,11 @@ export default function Home() {
       const caption = `Building at HH Goa 2026! Here is my official Builder Badge 🚀`;
       const tweetIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}&url=${encodeURIComponent(shareUrl)}&hashtags=FrameInGoa`;
       
-      window.open(tweetIntent, '_blank');
+      if (popup) {
+        popup.location.href = tweetIntent;
+      } else {
+        window.location.href = tweetIntent;
+      }
     } catch (err) {
       console.error('Link-based share failed, utilizing fallback clipboard/download:', err);
       
@@ -153,7 +161,12 @@ export default function Home() {
       const tweetText = encodeURIComponent(
         `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`
       );
-      window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
+      const fallbackUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+      if (popup) {
+        popup.location.href = fallbackUrl;
+      } else {
+        window.location.href = fallbackUrl;
+      }
     } finally {
       setIsSharing(false);
     }
