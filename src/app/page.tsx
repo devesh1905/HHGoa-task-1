@@ -97,6 +97,20 @@ export default function Home() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState<{ title: string; text: string; url: string }>({ title: '', text: '', url: '' });
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedInstagram, setCopiedInstagram] = useState(false);
+
+  // Close share modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowShareModal(false);
+      }
+    };
+    if (showShareModal) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showShareModal]);
 
   // Helper to render badge canvas and upload to Vercel Blob API
   const getBadgeShareUrl = async (): Promise<string> => {
@@ -179,6 +193,7 @@ export default function Home() {
     }
   };
 
+  // Custom branded share menu (replacing navigator.share)
   const handleGeneralShare = async () => {
     if (!cardRef.current) return;
     try {
@@ -187,33 +202,20 @@ export default function Home() {
       const titleText = `${name || 'Builder'}'s HH Goa 2026 Builder Badge`;
       const caption = `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`;
 
-      // Web Share API support check (Mobile browsers & desktop browsers supporting native sheet)
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({
-          title: titleText,
-          text: caption,
-          url: shareUrl,
-        });
-      } else {
-        // Fallback for unsupported browsers (Custom Modal)
-        setShareData({
-          title: titleText,
-          text: caption,
-          url: shareUrl,
-        });
-        setShowShareModal(true);
-      }
+      setShareData({
+        title: titleText,
+        text: caption,
+        url: shareUrl,
+      });
+      setShowShareModal(true);
     } catch (err) {
-      // AbortError occurs when user cancels native share sheet, ignore silently
-      if ((err as Error).name !== 'AbortError') {
-        console.error('General share failed:', err);
-        setShareData({
-          title: `${name || 'Builder'}'s HH Goa 2026 Builder Badge`,
-          text: `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`,
-          url: window.location.origin,
-        });
-        setShowShareModal(true);
-      }
+      console.error('General share failed:', err);
+      setShareData({
+        title: `${name || 'Builder'}'s HH Goa 2026 Builder Badge`,
+        text: `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`,
+        url: window.location.origin,
+      });
+      setShowShareModal(true);
     } finally {
       setIsGeneralSharing(false);
     }
@@ -596,35 +598,42 @@ export default function Home() {
         <span>HH GOA 2026 BY DEVESH</span>
       </footer>
 
-      {/* --- SHARE FALLBACK MODAL FOR UNSUPPORTED BROWSERS --- */}
+      {/* --- CUSTOM BRANDED SHARE MENU --- */}
       {showShareModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(9, 51, 35, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1.5rem'
-        }}>
-          <div className="cream-card gold-frame-accent animate-enter" style={{
-            maxWidth: '420px',
-            width: '100%',
-            padding: '1.75rem',
-            position: 'relative'
-          }}>
+        <div 
+          onClick={() => setShowShareModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(9, 51, 35, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.5rem'
+          }}
+        >
+          <div 
+            className="cream-card gold-frame-accent animate-enter" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px',
+              width: '100%',
+              padding: '1.75rem',
+              position: 'relative'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div className="kicker-label" style={{ margin: 0 }}>
                 <span>✦</span> SHARE BADGE
               </div>
               <button 
                 onClick={() => setShowShareModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-dark)' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', color: 'var(--text-dark)' }}
               >
                 ✕
               </button>
@@ -635,9 +644,9 @@ export default function Home() {
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {/* WhatsApp */}
+              {/* 1. WhatsApp */}
               <a 
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareData.text} ${shareData.url}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`${shareData.text} ${shareData.url}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="share-modal-item"
@@ -646,7 +655,7 @@ export default function Home() {
                 <span>↗</span>
               </a>
 
-              {/* LinkedIn */}
+              {/* 2. LinkedIn */}
               <a 
                 href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareData.url)}`}
                 target="_blank"
@@ -657,7 +666,27 @@ export default function Home() {
                 <span>↗</span>
               </a>
 
-              {/* Telegram */}
+              {/* 3. Instagram */}
+              <button 
+                onClick={async () => {
+                  try {
+                    const fullText = `${shareData.text} ${shareData.url}`;
+                    await navigator.clipboard.writeText(fullText);
+                    setCopiedInstagram(true);
+                    setTimeout(() => setCopiedInstagram(false), 3000);
+                    window.open('https://www.instagram.com', '_blank');
+                  } catch (e) {
+                    console.error('Failed to copy text for Instagram:', e);
+                  }
+                }}
+                className="share-modal-item"
+                style={{ width: '100%', cursor: 'pointer', textAlign: 'left' }}
+              >
+                <span>📷 {copiedInstagram ? 'CAPTION COPIED! PASTE ON INSTAGRAM' : 'Instagram'}</span>
+                <span>{copiedInstagram ? '✓' : '↗'}</span>
+              </button>
+
+              {/* 4. Telegram */}
               <a 
                 href={`https://t.me/share/url?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent(shareData.text)}`}
                 target="_blank"
@@ -668,11 +697,12 @@ export default function Home() {
                 <span>↗</span>
               </a>
 
-              {/* Copy Link */}
+              {/* 5. Copy Link */}
               <button 
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(shareData.url);
+                    const fullText = `${shareData.text} ${shareData.url}`;
+                    await navigator.clipboard.writeText(fullText);
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2000);
                   } catch (e) {
@@ -680,9 +710,9 @@ export default function Home() {
                   }
                 }}
                 className="share-modal-item"
-                style={{ width: '100%', cursor: 'pointer' }}
+                style={{ width: '100%', cursor: 'pointer', textAlign: 'left' }}
               >
-                <span>🔗 {copiedLink ? 'LINK COPIED TO CLIPBOARD!' : 'COPY DIRECT BADGE LINK'}</span>
+                <span>🔗 {copiedLink ? 'COPIED TO CLIPBOARD!' : 'Copy Link'}</span>
                 <span>{copiedLink ? '✓' : '📋'}</span>
               </button>
             </div>
