@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sensitive / temp files
+api key.txt
+extract.py
+extract_colors.py
+output.txt
+
