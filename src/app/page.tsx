@@ -92,71 +92,42 @@ export default function Home() {
     }
   };
 
-  const [isSharing, setIsSharing] = useState(false);
-
   const handleShare = async () => {
-    if (!cardRef.current) return;
-    try {
-      setIsSharing(true);
-      const canvas = await htmlToImage.toCanvas(cardRef.current, {
-        quality: 1.0,
-        pixelRatio: 2,
-        cacheBust: true,
-      });
-
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob((b) => resolve(b), 'image/png')
-      );
-
-      if (!blob) throw new Error('Failed to generate image blob');
-
-      // Upload rendered badge image to Vercel Blob API
-      const formData = new FormData();
-      formData.append('file', blob, 'badge.png');
-      formData.append('name', name || 'Builder');
-
-      const res = await fetch('/api/upload-badge', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      
-      let shareUrl = window.location.origin;
-      if (data.id) {
-        shareUrl = `${window.location.origin}/badge/${data.id}?name=${encodeURIComponent(name || 'Builder')}`;
-      }
-
-      const caption = `Building at HH Goa 2026! Here is my official Builder Badge 🚀`;
-      const tweetIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}&url=${encodeURIComponent(shareUrl)}&hashtags=FrameInGoa`;
-      
-      window.open(tweetIntent, '_blank');
-    } catch (err) {
-      console.error('Link-based share failed, utilizing fallback clipboard/download:', err);
-      
-      // Fallback: Copy to clipboard & download image if network upload fails
+    if (cardRef.current) {
       try {
-        const canvas = await htmlToImage.toCanvas(cardRef.current, { quality: 1.0, pixelRatio: 2 });
+        const canvas = await htmlToImage.toCanvas(cardRef.current, {
+          quality: 1.0,
+          pixelRatio: 2,
+          cacheBust: true,
+        });
+
         canvas.toBlob(async (blob) => {
-          if (blob) {
-            try {
-              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-            } catch (clipErr) {
-              console.warn('Clipboard write failed:', clipErr);
-            }
+          if (!blob) return;
+          try {
+            // Copy image directly to clipboard for instant Ctrl+V into X/Twitter
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+          } catch (clipErr) {
+            console.warn('Clipboard write failed, downloading image as fallback:', clipErr);
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `HH_Goa_2026_Badge.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
           }
         }, 'image/png');
-      } catch (fallbackErr) {
-        console.error('Fallback error:', fallbackErr);
+      } catch (err) {
+        console.error('Error generating badge for share:', err);
       }
-
-      const tweetText = encodeURIComponent(
-        `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa`
-      );
-      window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
-    } finally {
-      setIsSharing(false);
     }
+
+    const tweetText = encodeURIComponent(
+      `Building at HH Goa 2026! Here is my official Builder Badge 🚀 #FrameInGoa (Paste image with Ctrl+V)`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
   };
 
   return (
@@ -310,11 +281,10 @@ export default function Home() {
                 <button 
                   className="btn-outline" 
                   onClick={handleShare}
-                  disabled={!photo || !name || isSharing}
+                  disabled={!photo || !name}
                   style={{ width: '100%', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
                 >
-                  {isSharing ? <Loader2 size={16} className="spin" /> : <Share2 size={16} />} 
-                  {isSharing ? 'GENERATING SHARE LINK...' : 'SHARE ON X (#FRAMEINGOA) ↗'}
+                  <Share2 size={16} /> SHARE ON X (#FRAMEINGOA) ↗
                 </button>
               </div>
 
