@@ -62,29 +62,21 @@ export default function Home() {
       setIsDownloading(true);
       await new Promise((r) => setTimeout(r, 150));
 
-      const canvas = await htmlToImage.toCanvas(cardRef.current, {
+      const dataUrl = await htmlToImage.toPng(cardRef.current, {
         quality: 1.0,
         pixelRatio: 2,
         cacheBust: true,
       });
 
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const blobUrl = URL.createObjectURL(blob);
-        const cleanName = (name || 'Builder').trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const filename = `HH_Goa_2026_${cleanName}_Badge.png`;
+      const cleanName = (name || 'Builder').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `HH_Goa_2026_${cleanName}_Badge.png`;
 
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setTimeout(() => {
-          URL.revokeObjectURL(blobUrl);
-        }, 1000);
-      }, 'image/png');
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error('Failed to export ID Card:', err);
     } finally {
@@ -114,7 +106,7 @@ export default function Home() {
 
   // Helper to render badge canvas and upload to Vercel Blob API
   const getBadgeShareUrl = async (): Promise<string> => {
-    if (!cardRef.current) return window.location.origin;
+    if (!cardRef.current) return 'https://hh-goa-task-1-green.vercel.app';
 
     const canvas = await htmlToImage.toCanvas(cardRef.current, {
       quality: 1.0,
@@ -138,10 +130,15 @@ export default function Home() {
     });
 
     const data = await res.json();
+
+    const publicOrigin = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+      ? (process.env.NEXT_PUBLIC_APP_URL || 'https://hh-goa-task-1-green.vercel.app')
+      : window.location.origin;
+
     if (data.id) {
-      return `${window.location.origin}/badge/${data.id}?name=${encodeURIComponent(name || 'Builder')}`;
+      return `${publicOrigin}/badge/${data.id}?name=${encodeURIComponent(name || 'Builder')}`;
     }
-    return window.location.origin;
+    return publicOrigin;
   };
 
   const handleShare = async () => {
@@ -442,9 +439,16 @@ export default function Home() {
                     alt="2:47 PM Studio" 
                     style={{ height: '14px', width: 'auto' }} 
                   />
-                  <span className="font-display" style={{ color: 'var(--accent-yellow)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.06em' }}>
-                    HH GOA 2026
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <img 
+                      src="/hh_goa_header_logo.svg" 
+                      alt="Hacker House Goa" 
+                      style={{ height: '18px', width: 'auto' }} 
+                    />
+                    <span className="font-display" style={{ color: 'var(--accent-yellow)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.06em' }}>
+                      2026
+                    </span>
+                  </div>
                 </div>
               </div>
 

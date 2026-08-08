@@ -26,19 +26,25 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     }
   }
 
+  const publicDomain = process.env.NEXT_PUBLIC_APP_URL || 'https://hh-goa-task-1-green.vercel.app';
+
   if (!imageUrl) {
-    imageUrl = `https://hh-goa-task-1-green.vercel.app/api/badge-image/${id}`;
+    imageUrl = `${publicDomain}/api/badge-image/${id}`;
   }
 
   const title = `${nameParam}'s Official HH Goa 2026 Builder Badge`;
   const description = `Check out ${nameParam}'s official Builder Badge for Hacker House Goa 2026! Built with 2:47 PM Studio ID Generator. #FrameInGoa`;
+  const shareUrl = `${publicDomain}/badge/${id}?name=${encodeURIComponent(nameParam)}`;
 
   return {
+    metadataBase: new URL(publicDomain),
     title,
     description,
     openGraph: {
       title,
       description,
+      url: shareUrl,
+      siteName: 'Hacker House Goa 2026',
       images: [
         {
           url: imageUrl,
@@ -83,9 +89,12 @@ export default async function BadgePage({ params, searchParams }: Props) {
         {/* Header Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <img src="/2-47.svg" alt="2:47 PM Studio" style={{ height: '22px' }} />
-          <span className="font-display" style={{ color: 'var(--accent-yellow)', fontSize: '1.1rem', fontWeight: 700 }}>
-            HH GOA 2026
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <img src="/hh_goa_header_logo.svg" alt="Hacker House Goa" style={{ height: '24px', width: 'auto' }} />
+            <span className="font-display" style={{ color: 'var(--accent-yellow)', fontSize: '1.1rem', fontWeight: 700 }}>
+              2026
+            </span>
+          </div>
         </div>
 
         <h1 className="font-display" style={{ fontSize: '1.6rem', color: 'var(--card-cream)', margin: 0 }}>
